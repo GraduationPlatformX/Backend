@@ -1,0 +1,266 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id              Int              @id @default(autoincrement())
+  name            String
+  email           String           @unique
+  emailVerifiedAt DateTime?
+  password        String
+  role            Role             @default(STUDENT)
+  phone           String?
+  bio             String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  createdGroups   Group[]          @relation("CreatedGroups")
+  supervisedGroups Group[]         @relation("SupervisedGroups")
+  groupMembers    GroupMember[]
+  supervisorRequests SupervisorRequest[] @relation("SupervisorRequests")
+  sentInvitations     GroupInvitation[] @relation("SentInvitations")
+  receivedInvitations GroupInvitation[] @relation("ReceivedInvitations")
+  submissions     Submission[]     @relation("StudentSubmissions")
+  notifications   Notification[]
+  messages     GroupChatMessage[]
+  requestedSupervisorRequests SupervisorRequest[] @relation("RequestedByUser")
+  @@map("users")
+}
+
+enum Role {
+  STUDENT
+  ADMIN // Fixed typo
+  SUPERVISOR
+}
+
+model Group {
+  id           Int        @id @default(autoincrement())
+  name         String
+  description  String?
+  createdById  Int
+  supervisorId Int?
+  maxMembers   Int        @default(4)
+  status       GroupStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  createdBy    User       @relation("CreatedGroups", fields: [createdById], references: [id])
+  supervisor   User?      @relation("SupervisedGroups", fields: [supervisorId], references: [id])
+  supervisorRequests SupervisorRequest[] // Keep only one relation for requests
+  members      GroupMember[]
+  project      Project?
+  chat         GroupChat?
+  groupInvitations GroupInvitation[] @relation("GroupToInvitation")
+  @@map("groups")
+}
+
+enum GroupStatus {
+  OPEN
+  CLOSED
+  PENDING
+}
+
+model GroupMember {
+  id        Int    @id @default(autoincrement())
+  groupId   Int
+  studentId Int
+  role      GroupRole @default(MEMBER)
+  joinedAt  DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@unique([groupId, studentId])
+  @@map("group_member")
+}
+
+enum GroupRole {
+  LEADER
+  MEMBER
+}
+
+model SupervisorRequest {
+  id           Int       @id @default(autoincrement())
+  groupId      Int
+  supervisorId Int
+  status       RequestStatus @default(PENDING)
+  message      String?
+  requestedById Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  group        Group     @relation(fields: [groupId], references: [id])
+  supervisor   User      @relation("SupervisorRequests", fields: [supervisorId], references: [id])
+  requestedBy  User?     @relation("RequestedByUser", fields: [requestedById], references: [id])
+
+  @@unique([groupId, supervisorId])
+  @@map("supervisor_requests")
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Project {
+  id          Int        @id @default(autoincrement())
+  groupId     Int        @unique
+  title       String
+  description String?
+  technologies Json?
+  status      ProjectStatus @default(DRAFT)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  group       Group      @relation(fields: [groupId], references: [id])
+  milestones  Milestone[]
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Milestone {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  title       String
+  description String?
+  deadline    DateTime?
+  status      MilestoneStatus @default(IN_PROGRESS)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id])
+  submissions Submission[]
+  @@map("milestones")
+}
+
+enum MilestoneStatus {
+  IN_PROGRESS
+  SUBMITTED
+  REVIEWED
+  COMPLETED
+}
+
+model Submission {
+  id          Int       @id @default(autoincrement())
+  milestoneId Int
+  submittedBy Int
+  fileUrl     String
+  feedback       String[]
+  status      SubmissionStatus @default(PENDING)
+  grade       Int?
+  submittedAt DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  milestone   Milestone  @relation(fields: [milestoneId], references: [id])
+  student     User       @relation("StudentSubmissions", fields: [submittedBy], references: [id])
+  @@map("submissions")
+}
+
+enum SubmissionStatus {
+  PENDING 
+  APPROVED 
+  REJECTED
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String?
+  message   String
+  seen      Boolean  @default(false)
+  meta      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  @@map("notifications")
+}
+
+model GroupChat {
+  id        Int       @id @default(autoincrement())
+  groupId   Int       @unique       // 1-to-1 with Group
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  group     Group     @relation(fields: [groupId], references: [id])
+  messages  GroupChatMessage[]
+  @@map("group_chat")
+}
+
+
+
+
+model GroupChatMessage {
+  id          Int       @id @default(autoincrement())
+  chatId      Int
+  senderId    Int
+  content     String?   // text
+  createdAt   DateTime  @default(now())
+
+  chat        GroupChat @relation(fields: [chatId], references: [id])
+  sender      User      @relation(fields: [senderId], references: [id])
+  @@map("group_chat_message")
+
+}
+
+model GroupInvitation {
+  id        Int       @id @default(autoincrement())
+  groupId   Int
+  code      String    @unique
+  invitedBy Int       // user who generated the invitation
+  expiresAt DateTime? // optional expiration date
+  status      GroupInvitationStatus @default(PENDING)
+  receivedBy    Int?      // user who accepted the invitation
+  usedAt    DateTime? // timestamp when the invitation was accepted
+  createdAt DateTime  @default(now())
+
+  group      Group     @relation("GroupToInvitation",fields: [groupId], references: [id])
+  inviter    User      @relation("SentInvitations", fields: [invitedBy], references: [id])
+  receiver      User?     @relation("ReceivedInvitations", fields: [receivedBy], references: [id])
+
+  @@map("group_invitations")
+}
+
+enum GroupInvitationStatus {
+  PENDING
+  REJECTED
+  ACCEPTED
+}
+
+
+
+
+
+
+
+
