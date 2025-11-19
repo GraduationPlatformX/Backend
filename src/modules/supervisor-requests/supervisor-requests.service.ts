@@ -28,11 +28,7 @@ export class SupervisorRequestsService {
         supervisorId: dto.supervisorId,
       },
     });
-    if (existingRequest) {
-      throw new BadRequestException(
-        "You have already requested this supervisor for this group"
-      );
-    }
+
     const group = await this.prisma.group.findUnique({
       where: { id: dto.groupId },
     });
@@ -43,6 +39,10 @@ export class SupervisorRequestsService {
       throw new ForbiddenException(
         "Only the group leader can request a supervisor"
       );
+    }
+
+    if (existingRequest) {
+      throw new BadRequestException("You have already requested a supervisor");
     }
 
     const existingSupervisor = this.prisma.user.findUnique({

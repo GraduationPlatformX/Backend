@@ -19,7 +19,7 @@ import { FileValidationPipe } from 'src/common/validators/file-validation.pipe';
 import { UpdateSubmissionDto } from './dto';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 
-@Controller('milestones/:milestoneId/submissions')
+@Controller('submissions')
 export class SubmissionsController {
   constructor(
     private readonly submissionsService: SubmissionsService,
@@ -31,18 +31,17 @@ export class SubmissionsController {
       { name: 'files', maxCount: 3 },
     ]),)
   create(
-    @Param('milestoneId', ParseIntPipe) milestoneId: number,
+    @Body() { milestoneId }: { milestoneId: string },
     @UploadedFiles(new FileValidationPipe())
     uploads: { files?: Express.Multer.File[] },
     @User() user,
   ) {
-    
     return this.submissionsService.create(milestoneId, uploads,user);
   }
 
   @Get()
   findAll(
-    @Param('milestoneId', ParseIntPipe) milestoneId: number,
+    @Body() { milestoneId }: { milestoneId: number },
     @User() user,
   ) {
     return this.submissionsService.findAll(milestoneId, user);

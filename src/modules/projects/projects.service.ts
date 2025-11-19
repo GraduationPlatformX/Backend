@@ -112,10 +112,11 @@ export class ProjectsService {
       include: {
         group: {
           include: {
-            members: true,
+            members: {include:{student:true}},
             supervisor: { select: baseUserSelect },
           },
         },
+        milestones:{include:{submissions:true}}
       },
     });
 

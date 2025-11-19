@@ -61,28 +61,28 @@ export class AppService {
    * Supervisor dashboard data
    */
   async getSupervisorData(user: User) {
-    const [supervisedGroups,supervisorRequests, notificationCounts] = await Promise.all([
+    const [supervisedGroups, supervisorRequests] = await Promise.all([
       this.prisma.group.findMany({
         where: { supervisorId: user.id },
         include: {
-          project: { include: { milestones: true } },
+          project: {
+            include: { milestones: { include: { submissions: true } } },
+          },
           members: { include: { student: { select: baseUserSelect } } },
         },
       }),
 
       this.prisma.supervisorRequest.findMany({
-        where:{supervisorId:user.id,status:RequestStatus.PENDING}
-      }),
-
-      this.prisma.notification.count({
-        where: { userId: user.id, seen: false },
+        where: { supervisorId: user.id, status: RequestStatus.PENDING },
+        include: {
+          group: true,
+        },
       }),
     ]);
 
     return {
       supervisedGroups,
       supervisorRequests,
-      notificationCounts,
     };
   }
 
@@ -90,19 +90,20 @@ export class AppService {
    * Student dashboard data
    */
   async getStudentData(user: User) {
-      const group = await this.prisma.group.findFirst({
-        where: {
-          members: { some: { studentId: user.id } },
+    const group = await this.prisma.group.findFirst({
+      where: {
+        members: { some: { studentId: user.id } },
+      },
+      include: {
+        project: {
+          include: { milestones: { include: { submissions: true } } },
         },
-        include: {
-          project: { include: { milestones: {include:{submissions:true}} } },
-          members: { include: { student: { select: baseUserSelect } } },
-          supervisor: { select: baseUserSelect },
-          chat: true
+        members: { include: { student: { select: baseUserSelect } } },
+        supervisor: { select: baseUserSelect },
+        chat: true,
+      },
+    });
 
-        },
-      });
-
-    return group
-    }
+    return group;
+  }
 }

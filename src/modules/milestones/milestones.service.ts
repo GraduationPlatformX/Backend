@@ -16,6 +16,7 @@ export class MilestonesService {
     createMilestoneDto: CreateMilestoneDto,
     user: User
   ) {
+
     // Check if project exists and user has access
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -40,7 +41,7 @@ export class MilestonesService {
 
     if (milestones) {
       if (
-        new Date(milestones[0].deadline ?? "") >=
+        new Date(milestones[0]?.deadline ?? project.createdAt) >=
         new Date(createMilestoneDto.deadline)
       ) {
         throw new ForbiddenException(
