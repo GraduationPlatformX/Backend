@@ -17,7 +17,7 @@ export class SubmissionsService {
   ) {}
 
   async create(
-    milestoneId: number,
+    milestoneId: string,
     uploads: { files?: Express.Multer.File[] },
     user: User
   ) {
@@ -25,7 +25,7 @@ export class SubmissionsService {
 
     // Check if milestone exists
     const milestone = await this.prisma.milestone.findUnique({
-      where: { id: milestoneId },
+      where: { id: parseInt(milestoneId) },
       include: {
         project: {
           include: {
@@ -58,7 +58,7 @@ export class SubmissionsService {
       files.map((file) =>
         this.prisma.submission.create({
           data: {
-            milestoneId,
+            milestoneId:parseInt(milestoneId),
             fileUrl: file.url,
             submittedBy: user.id,
           },
@@ -71,7 +71,7 @@ export class SubmissionsService {
 
     // Update milestone status to SUBMITTED
     const updatedMilestone = await this.prisma.milestone.update({
-      where: { id: milestoneId },
+      where: { id: parseInt(milestoneId) },
       data: { status: MilestoneStatus.SUBMITTED },
     });
 
@@ -112,36 +112,6 @@ export class SubmissionsService {
     });
   }
 
-  // async findOne(id: number, userRole: UserRole, userId: number) {
-  //   const submission = await this.prisma.submission.findUnique({
-  //     where: { id },
-  //     include: {
-  //       milestone: {
-  //         include: {
-  //           project: true,
-  //         },
-  //       },
-  //       student: {
-  //         select: {
-  //           id: true,
-  //           firstName: true,
-  //           lastName: true,
-  //           email: true,
-  //         },
-  //       },
-  //     },
-  //   });
-
-  //   if (!submission) {
-  //     throw new NotFoundException("Submission not found");
-  //   }
-
-  //   // Check permissions
-  //   this.checkMilestoneAccess(submission.milestone.project, userRole, userId);
-
-  //   return submission;
-  // }
-
   async update(
     id: number,
     updateSubmissionDto: UpdateSubmissionDto,
@@ -168,11 +138,10 @@ export class SubmissionsService {
 
     // Check permissions - only supervisors and admins can update submissions
     this.checkMilestoneAccess(submission.milestone.project, user.role, user.id);
-
     const updatedSubmission = await this.prisma.submission.update({
       where: { id },
       data: {
-        ...updateSubmissionDto,
+        ...updateSubmissionDto
       },
       include: {
         milestone: {
@@ -193,7 +162,7 @@ export class SubmissionsService {
     });
 
     // Update milestone status to REVIEWED if comment is provided
-    if (updateSubmissionDto.notes) {
+    if (updateSubmissionDto.feedback) {
       const updatedMilestone = await this.prisma.milestone.update({
         where: { id: submission.milestoneId },
         data: { status: MilestoneStatus.REVIEWED },

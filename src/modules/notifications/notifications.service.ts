@@ -42,40 +42,7 @@ export class NotificationsService {
     };
   }
 
-  // async findOne(id: number, userId: number) {
-  //   const notification = await this.prisma.notification.findUnique({
-  //     where: { id },
-  //   });
 
-  //   if (!notification) {
-  //     throw new NotFoundException('Notification not found');
-  //   }
-
-  //   if (notification.userId !== userId) {
-  //     throw new NotFoundException('Notification not found');
-  //   }
-
-  //   return notification;
-  // }
-
-  // async markAsSeen(id: number, userId: number) {
-  //   const notification = await this.prisma.notification.findUnique({
-  //     where: { id },
-  //   });
-
-  //   if (!notification) {
-  //     throw new NotFoundException('Notification not found');
-  //   }
-
-  //   if (notification.userId !== userId) {
-  //     throw new NotFoundException('Notification not found');
-  //   }
-
-  //   return this.prisma.notification.update({
-  //     where: { id },
-  //     data: { seen: true },
-  //   });
-  // }
 
   async markAllAsSeen(user: User) {
     return await this.prisma.notification.updateMany({
@@ -86,44 +53,5 @@ export class NotificationsService {
       data: { seen: true },
     });
   }
-
-  async sendTestNotification(user: User) {
-    return this.prisma.notification.create({
-      data: {
-        userId: user.id,
-        message: 'This is a test notification sent to you.',
-      },
-    });
-  }
-
- 
-
   
-  
-  // async getUnreadCount(userId: number) {
-  //   return this.prisma.notification.count({
-  //     where: {
-  //       userId,
-  //       seen: false,
-  //     },
-  //   });
-  // }
-
-  // async remove(id: number, userId: number) {
-  //   const notification = await this.prisma.notification.findUnique({
-  //     where: { id },
-  //   });
-
-  //   if (!notification) {
-  //     throw new NotFoundException('Notification not found');
-  //   }
-
-  //   if (notification.userId !== userId) {
-  //     throw new NotFoundException('Notification not found');
-  //   }
-
-  //   return this.prisma.notification.delete({
-  //     where: { id },
-  //   });
-  // }
 }

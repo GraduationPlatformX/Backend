@@ -33,28 +33,10 @@ export class NotificationsController {
   //   return this.notificationsService.getUnreadCount(user);
   // }
 
-  // @Get(':id')
-  // findOne(@Param('id', ParseIntPipe) id: number, @User() user) {
-  //   return this.notificationsService.findOne(id, user);
-  // }
-
-  // @Patch(':id/seen')
-  // markAsSeen(@Param('id', ParseIntPipe) id: number, @User() user) {
-  //   return this.notificationsService.markAsSeen(id, user);
-  // }
 
   @Patch('mark-all-seen')
   markAllAsSeen(@User() user) {
     return this.notificationsService.markAllAsSeen(user);
   }
 
-  @Post("test")
-  sendTestNotification(@User() user){
-    return this.notificationsService.sendTestNotification(user);
-  }
-
-  // @Delete(':id')
-  // remove(@Param('id', ParseIntPipe) id: number, @User() user) {
-  //   return this.notificationsService.remove(id, user);
-  // }
 }

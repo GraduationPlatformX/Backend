@@ -1,9 +1,9 @@
-import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min, Max, IsArray } from 'class-validator';
 
 export class UpdateSubmissionDto {
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsArray()
+  feedback?: string[];
 
   @IsOptional()
   @IsInt()

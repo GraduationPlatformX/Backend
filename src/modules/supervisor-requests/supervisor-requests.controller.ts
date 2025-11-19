@@ -18,22 +18,19 @@ export class SupervisorRequestsController {
 
   @Post()
   @UseGuards(RolesGuard(Role.STUDENT))
-  requestSupervisor(
-    @Body() dto: CreateSupervisorRequestDto,
-    @User() user
-  ) {
+  requestSupervisor(@Body() dto: CreateSupervisorRequestDto, @User() user) {
     return this.service.requestSupervisor(dto, user);
   }
 
-  @Patch(":id/accept")
+  @Patch("/accept")
   @UseGuards(RolesGuard(Role.SUPERVISOR))
-  acceptRequest(@Param("id", ParseIntPipe) requestId: number, @User() user) {
+  acceptRequest(@Body() { requestId }: { requestId: number }, @User() user) {
     return this.service.acceptRequest(requestId, user);
   }
 
-  @Patch(":id/reject")
+  @Patch("/reject")
   @UseGuards(RolesGuard(Role.SUPERVISOR))
-  rejectRequest(@Param("id", ParseIntPipe) requestId: number, @User() user) {
+  rejectRequest(@Body() { requestId }: { requestId: number }, @User() user) {
     return this.service.rejectRequest(requestId, user);
   }
 }
